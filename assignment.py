@@ -121,6 +121,49 @@ def BFS(source, target, busmap):
     return all_path
 
 
+def create_dict(routes):
+    map = {}
+    con2bus = {}
+    for i in range(len(routes)):
+        line = routes[i][1]
+        # print(routes[i][0])
+        # print(line)
+        for j in range(len(line)):
+            if j == 0:
+                (map.setdefault(line[j], set())).add(line[j + 1])
+                (con2bus.setdefault((line[j], line[j + 1]), [])).append(routes[i][0])
+                # print(con2bus[(line[j], line[j+1])])
+
+            elif j == len(line) - 1:
+                # (map.setdefault(line[j], set())).add(line[j-1])
+                pass
+            else:
+                (map.setdefault(line[j], set())).add(line[j + 1])
+                (con2bus.setdefault((line[j], line[j + 1]), [])).append(routes[i][0])
+                # (map.setdefault(line[j], set())).add(line[j-1])
+    for key, value in map.items():
+        print('{key}: {value}'.format(key=key, value=value))
+    return map, con2bus
+
+def calc_line(con2bus, path):
+    buses = set(con2bus[(path[0], path[1])])
+    chang_line = [buses]
+    line_map = {}
+    start = path[0]
+    for stop in range(len(path) - 1):
+        # print(chang_line)
+        buses = chang_line[-1] & set(con2bus[(path[stop], path[stop + 1])])
+        if not buses:
+            line_map[(start, path[stop])] = chang_line[-1]
+            chang_line.append(set(con2bus[(path[stop], path[stop + 1])]))
+            start = path[stop]
+
+        else:
+            chang_line.pop()
+            chang_line.append(buses)
+
+    line_map[(start, path[-1])] = chang_line[-1]
+    return line_map, chang_line
 
 if __name__ == '__main__':
     # You can write any testing of your function that you want to
@@ -133,61 +176,27 @@ if __name__ == '__main__':
     # example_journey = [("10 Denman Prospect", "City West Marcus Clarke St", "Cotter Rd After Streeton Dr"),
     #                    ("10 Denman Prospect", "Cotter Rd After Streeton Dr", "Holborow Av after Greenwood St")]
     # print_journey(example_journey)
-    map = {}
-    con2bus = {}
-    for i in range(len(routes)):
-        line = routes[i][1]
-        # print(routes[i][0])
-        # print(line)
-        for j in range(len(line)):
-            if j == 0:
-                (map.setdefault(line[j], set())).add(line[j+1])
-                (con2bus.setdefault((line[j], line[j+1]), [])).append(routes[i][0])
-                # print(con2bus[(line[j], line[j+1])])
 
-            elif j == len(line)-1:
-                # (map.setdefault(line[j], set())).add(line[j-1])
-                pass
-            else:
-                (map.setdefault(line[j], set())).add(line[j+1])
-                (con2bus.setdefault((line[j], line[j + 1]), [])).append(routes[i][0])
-                # (map.setdefault(line[j], set())).add(line[j-1])
-    for key, value in map.items():
-        print('{key}: {value}'.format(key=key, value=value))
 
     # for key, value in con2bus.items():
     #     print('{key}: {value}'.format(key=key, value=value))
+    busmap, pathname = create_dict(routes)
 
-    my_path = BFS(195, 105, busmap=map)
+
+    my_path = BFS(195, 105, busmap)
     print("all path:", my_path,"=>", len(my_path), "stops")
     for stop in range(len(my_path)-1):
-        print(my_path[stop],"=>",my_path[stop+1],con2bus[(my_path[stop], my_path[stop+1])])
+        print(my_path[stop],"=>",my_path[stop+1],pathname[(my_path[stop], my_path[stop+1])])
     print("--------------------------------------")
 
-    buses = set(con2bus[(my_path[0], my_path[1])])
-    chang_line = [buses]
-    line_map = {}
-    start = my_path[0]
-    for stop in range(len(my_path)-1):
-        # print(chang_line)
-        buses = chang_line[-1] & set(con2bus[(my_path[stop], my_path[stop + 1])])
-        if not buses:
-            line_map[(start, my_path[stop])] = chang_line[-1]
-            chang_line.append(set(con2bus[(my_path[stop], my_path[stop + 1])]))
-            start = my_path[stop]
 
-        else:
-            chang_line.pop()
-            chang_line.append(buses)
-
-    line_map[(start, my_path[-1])] = chang_line[-1]
-
+    line_dic, change_line = calc_line(pathname, my_path)
 
 
             # print(my_path[stop], "=>", my_path[stop + 1], buses)
-    print("line",chang_line)
+    print("line", change_line)
     print("--------------------------------------")
-    for key, value in line_map.items():
+    for key, value in line_dic.items():
         print('{key}: {value}'.format(key=key, value=value))
 
 
