@@ -118,12 +118,14 @@ def BFS(source, target, busmap):
             new_path.append(connection)
             # print("new path: ", new_path)
             queue.append(new_path)
-    return all_path
+    # return all_path
 
 
 def create_dict(routes):
     map = {}
+    # 24: {49, 70}
     con2bus = {}
+    # (474, 449): ['79 Tuggeranong']
     for i in range(len(routes)):
         line = routes[i][1]
         # print(routes[i][0])
@@ -141,8 +143,8 @@ def create_dict(routes):
                 (map.setdefault(line[j], set())).add(line[j + 1])
                 (con2bus.setdefault((line[j], line[j + 1]), [])).append(routes[i][0])
                 # (map.setdefault(line[j], set())).add(line[j-1])
-    for key, value in map.items():
-        print('{key}: {value}'.format(key=key, value=value))
+    # for key, value in map.items():
+    #     print('{key}: {value}'.format(key=key, value=value))
     return map, con2bus
 
 def calc_line(con2bus, path):
@@ -163,7 +165,45 @@ def calc_line(con2bus, path):
             chang_line.append(buses)
 
     line_map[(start, path[-1])] = chang_line[-1]
-    return line_map, chang_line
+    return line_map
+
+def stop2stop(con2bus, path, stopsname):
+    buses = set(con2bus[(path[0], path[1])])
+    chang_line = [buses]
+    line_map = {}
+    start = 0
+    trip = []
+    numb2name = []
+    for stop in range(len(path) - 1):
+        # print(chang_line)
+        buses = chang_line[-1] & set(con2bus[(path[stop], path[stop + 1])])
+        if not buses:
+            # line_map[(start, path[stop])] = chang_line[-1]
+            for i in range(start, stop):
+                line_map[(path[i], path[i+1])] = chang_line[-1]
+                trip.append([path[i], path[i+1], chang_line[-1]])
+            chang_line.append(set(con2bus[(path[stop], path[stop + 1])]))
+            start = stop
+
+        else:
+            chang_line.pop()
+            chang_line.append(buses)
+
+    for i in range(start, len(path)-1):
+        line_map[(path[i], path[i+1])] = chang_line[-1]
+        trip.append([path[i], path[i+1], chang_line[-1]])
+
+    for key, value in line_map.items():
+        print('{key}: {value}'.format(key=key, value=value))
+
+    for i in trip:
+        print("iii ",i)
+        bus = list(i[2])[0]
+        numb2name.append([bus, stopsname[i[0]][3], stopsname[i[1]][3]])
+
+    return numb2name
+
+
 
 if __name__ == '__main__':
     # You can write any testing of your function that you want to
@@ -173,9 +213,9 @@ if __name__ == '__main__':
     stops = load_stops('bus_stops.csv')
     routes = load_routes('bus_routes.csv')
 
-    # example_journey = [("10 Denman Prospect", "City West Marcus Clarke St", "Cotter Rd After Streeton Dr"),
-    #                    ("10 Denman Prospect", "Cotter Rd After Streeton Dr", "Holborow Av after Greenwood St")]
-    # print_journey(example_journey)
+    example_journey = [("10 Denman Prospect", "City West Marcus Clarke St", "Cotter Rd After Streeton Dr"),
+                       ("10 Denman Prospect", "Cotter Rd After Streeton Dr", "Holborow Av after Greenwood St")]
+    print_journey(example_journey)
 
 
     # for key, value in con2bus.items():
@@ -185,20 +225,19 @@ if __name__ == '__main__':
 
     my_path = BFS(195, 105, busmap)
     print("all path:", my_path,"=>", len(my_path), "stops")
-    for stop in range(len(my_path)-1):
-        print(my_path[stop],"=>",my_path[stop+1],pathname[(my_path[stop], my_path[stop+1])])
+    # for stop in range(len(my_path)-1):
+    #     print(my_path[stop],"=>",my_path[stop+1],pathname[(my_path[stop], my_path[stop+1])])
     print("--------------------------------------")
 
 
-    line_dic, change_line = calc_line(pathname, my_path)
-
+    line_dic = stop2stop(pathname, my_path, stops)
+    print(line_dic)
 
             # print(my_path[stop], "=>", my_path[stop + 1], buses)
-    print("line", change_line)
-    print("--------------------------------------")
-    for key, value in line_dic.items():
-        print('{key}: {value}'.format(key=key, value=value))
 
+    print("--------------------------------------")
+
+    print_journey(line_dic)
 
 
 
