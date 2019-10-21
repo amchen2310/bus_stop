@@ -98,6 +98,30 @@ def time_journey(journey, stops, routes, times):
     return
 
 
+def BFS(source, target, busmap):
+    used = set()
+    queue = []
+    # connection = set()
+    all_path =[]
+    this_map = busmap.copy()
+
+    queue.append([source])
+
+    while queue:
+        path = queue.pop(0)
+        node = path[-1]
+        if node == target:
+            # all_path.append(path)
+            return path
+        for connection in this_map.get(node, set()):
+            new_path = list(path)
+            new_path.append(connection)
+            # print("new path: ", new_path)
+            queue.append(new_path)
+    return all_path
+
+
+
 if __name__ == '__main__':
     # You can write any testing of your function that you want to
     # run here. The following is just an example, showing how to
@@ -110,21 +134,67 @@ if __name__ == '__main__':
     #                    ("10 Denman Prospect", "Cotter Rd After Streeton Dr", "Holborow Av after Greenwood St")]
     # print_journey(example_journey)
     map = {}
+    con2bus = {}
     for i in range(len(routes)):
         line = routes[i][1]
+        # print(routes[i][0])
         # print(line)
         for j in range(len(line)):
             if j == 0:
                 (map.setdefault(line[j], set())).add(line[j+1])
+                (con2bus.setdefault((line[j], line[j+1]), [])).append(routes[i][0])
+                # print(con2bus[(line[j], line[j+1])])
+
             elif j == len(line)-1:
                 # (map.setdefault(line[j], set())).add(line[j-1])
                 pass
-
             else:
                 (map.setdefault(line[j], set())).add(line[j+1])
+                (con2bus.setdefault((line[j], line[j + 1]), [])).append(routes[i][0])
                 # (map.setdefault(line[j], set())).add(line[j-1])
     for key, value in map.items():
         print('{key}: {value}'.format(key=key, value=value))
+
+    # for key, value in con2bus.items():
+    #     print('{key}: {value}'.format(key=key, value=value))
+
+    my_path = BFS(195, 105, busmap=map)
+    print("all path:", my_path,"=>", len(my_path), "stops")
+    for stop in range(len(my_path)-1):
+        print(my_path[stop],"=>",my_path[stop+1],con2bus[(my_path[stop], my_path[stop+1])])
+    print("--------------------------------------")
+
+    buses = set(con2bus[(my_path[0], my_path[1])])
+    chang_line = [buses]
+    line_map = {}
+    start = my_path[0]
+    for stop in range(len(my_path)-1):
+        # print(chang_line)
+        buses = chang_line[-1] & set(con2bus[(my_path[stop], my_path[stop + 1])])
+        if not buses:
+            line_map[(start, my_path[stop])] = chang_line[-1]
+            chang_line.append(set(con2bus[(my_path[stop], my_path[stop + 1])]))
+            start = my_path[stop]
+
+        else:
+            chang_line.pop()
+            chang_line.append(buses)
+
+    line_map[(start, my_path[-1])] = chang_line[-1]
+
+
+
+            # print(my_path[stop], "=>", my_path[stop + 1], buses)
+    print("line",chang_line)
+    print("--------------------------------------")
+    for key, value in line_map.items():
+        print('{key}: {value}'.format(key=key, value=value))
+
+
+
+
+
+
 
 
 
